@@ -400,7 +400,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04b6959c79b92542ac0befb80305582, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 200
+  resolution: 512
   border: 1
-  MarkerDictionary: 16
-  markerId: 59
+  MarkerDictionary: 4
+  markerId: 15

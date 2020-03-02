@@ -11,7 +11,7 @@ public class ArucoMarker : MonoBehaviour
 {
 
     public int resolution = 512;
-    public bool border = true;
+    //public bool border = true; (disabling this for now)
     public HMDSimOpenCV.ARUCO_PREDEFINED_DICTIONARY MarkerDictionary;
     public int markerId;
 
@@ -29,11 +29,12 @@ public class ArucoMarker : MonoBehaviour
         textureBuffer = new byte[resolution * resolution * 3];
 
         // draw the image
-        HMDSimOpenCV.Aruco_DrawMarker((int)MarkerDictionary, markerId, resolution, border, textureBuffer);
+        HMDSimOpenCV.Aruco_DrawMarker((int)MarkerDictionary, markerId, resolution, true, textureBuffer);
 
         // update the texture in the picture
         markerTexture = new Texture2D(resolution, resolution, TextureFormat.RGB24, false);
         markerTexture.LoadRawTextureData(textureBuffer);
+        markerTexture.Apply();
 
         // update material on the plane
         Renderer r = this.GetComponent<Renderer>();
