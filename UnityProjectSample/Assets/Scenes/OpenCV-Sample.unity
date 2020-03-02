@@ -401,6 +401,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resolution: 512
-  border: 1
   MarkerDictionary: 4
-  markerId: 15
+  markerId: 42

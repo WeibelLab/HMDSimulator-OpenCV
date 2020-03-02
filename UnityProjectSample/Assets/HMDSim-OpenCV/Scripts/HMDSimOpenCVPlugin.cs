@@ -32,6 +32,6 @@ public class HMDSimOpenCV
     };
 
     [DllImport(NATIVE_LIBRARY_NAME, CallingConvention = CallingConvention.StdCall)]
-    public static extern void Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, byte[] rgbOutput);
+    public static extern bool Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, byte[] rgbOutput);
 
 }

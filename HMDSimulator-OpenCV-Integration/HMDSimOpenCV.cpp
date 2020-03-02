@@ -8,7 +8,7 @@
 
 extern "C"
 {
-	DLL_EXPORT void Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, unsigned char* rgbOutput)
+	DLL_EXPORT bool Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, unsigned char* rgbOutput)
 	{
 		try
 		{
@@ -25,12 +25,18 @@ extern "C"
 			cv::cvtColor(markerMtx, destMatrix, cv::COLOR_GRAY2RGB);
 
 			// copies to unity (yes, I know, a lot of copies)
-			memcpy(rgbOutput, destMatrix.data, (markerSize * markerSize) * sizeof(unsigned char) * 3);
+			if (rgbOutput != nullptr)
+			{
+				memcpy(rgbOutput, destMatrix.data, (markerSize * markerSize) * sizeof(unsigned char) * 3);
+				return true;
+			}
 		}
 		catch (std::exception e)
 		{
 			// do nothing
 		}
+
+		return false;
 
 	}
 }
