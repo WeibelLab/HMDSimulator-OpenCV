@@ -105,8 +105,13 @@ DLL_EXPORT bool Aruco_CameraCalibration(
 	std::vector<int> ids;
 	cv::aruco::detectMarkers(bwInput, dict, corners, ids, cv::aruco::DetectorParameters::create(), rejecteds);
 
-	//
-	cv::aruco::
+	if(corners.size() >= 3) {
+
+		//
+		std::vector<cv::Point2f> charucoCorners;
+		std::vector<int> ids;
+		cv::aruco::interpolateCornersCharuco(corners, ids, bwInput, chBoard, charucoCorners, ids);
+	}
 
 	// 
 	cv::Size sz(int(squareWidth * squareLength), int(squareHeight * squareLength));
