@@ -1,4 +1,6 @@
 #pragma once
+#include <opencv2/aruco/charuco.hpp>
+#include <opencv2/aruco/dictionary.hpp>
 
 extern "C"
 {
@@ -33,7 +35,34 @@ extern "C"
 
 	DLL_EXPORT bool Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, unsigned char* rgbOutput);
 
-	DLL_EXPORT bool Aruco_DrawCharucoBoard(int predefinedDict, int squareWidth, int squareHeight, float squareLength, float markerLength, bool border, unsigned char* rgbOutput);
+	DLL_EXPORT int Aruco_CreateDetector(int predefinedDict, int squareWidth, int squareHeight, float squareLength, float markerLength, bool border);
 
-	DLL_EXPORT bool Aruco_CameraCalibration(unsigned char* rgbInput, int width, int height, int predefinedDict, int squareWidth, int squareHeight, float squareLength, float markerLength, bool border);
+	DLL_EXPORT bool Aruco_DrawCharucoBoard(int detectorHandle, unsigned char* rgbOutput);
+
+	DLL_EXPORT int Aruco_CollectCharucoCorners(int detectorHandle, unsigned char* rgbInput, int width, int height);
+
+	DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle);
 }
+
+
+class ArucoDetector {
+public:
+	int imageWidth = -1;
+	int imageHeight = -1;
+	int detectorHandle;
+	int predefinedDict;
+	int squareWidth;
+	int squareHeight;
+  float squareLength;
+	float markerLength;
+	bool border;
+
+	cv::Ptr<cv::aruco::Dictionary> dict;
+	cv::Ptr<cv::aruco::CharucoBoard> chBoard;
+
+	std::vector<std::vector<cv::Point2f>> charucoCorners;
+	std::vector<std::vector<int>> charucoIds;
+
+	cv::Mat cameraMatrix;
+	cv::Mat distCoeff;
+};
