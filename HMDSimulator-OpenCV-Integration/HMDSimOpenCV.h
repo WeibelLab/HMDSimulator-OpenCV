@@ -1,6 +1,5 @@
 #pragma once
 
-
 extern "C"
 {
 	#define DLL_EXPORT __declspec(dllexport) 
@@ -33,4 +32,8 @@ extern "C"
 	//};
 
 	DLL_EXPORT bool Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, unsigned char* rgbOutput);
+
+	DLL_EXPORT bool Aruco_DrawCharucoBoard(int predefinedDict, int squareWidth, int squareHeight, float squareLength, float markerLength, bool border, unsigned char* rgbOutput);
+
+	DLL_EXPORT bool Aruco_CameraCalibration(unsigned char* rgbInput, int width, int height, int predefinedDict, int squareWidth, int squareHeight, float squareLength, float markerLength, bool border);
 }
