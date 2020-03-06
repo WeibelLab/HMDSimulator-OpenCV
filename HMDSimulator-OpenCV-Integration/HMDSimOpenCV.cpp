@@ -8,9 +8,10 @@
 #include <opencv2/aruco/charuco.hpp>
 
 
+//std::vector<
+
 extern "C"
 {
-
 
 	DLL_EXPORT bool Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, unsigned char* rgbOutput)
 	{
@@ -95,12 +96,17 @@ DLL_EXPORT bool Aruco_CameraCalibration(
 	// create the charuco board
 	cv::Ptr<cv::aruco::CharucoBoard> chBoard = cv::aruco::CharucoBoard::create(squareWidth, squareHeight, squareLength, markerLength, dict);
 
+	// convert to black and white
+	cv::Mat bwInput;
+	cv::cvtColor(image, bwInput, cv::COLOR_RGB2GRAY);
+
 	// Detect corners
 	std::vector<std::vector<cv::Point2f>> corners, rejecteds;
 	std::vector<int> ids;
-	cv::aruco::detectMarkers(image, dict, corners, ids, cv::aruco::DetectorParameters::create(), rejecteds);
+	cv::aruco::detectMarkers(bwInput, dict, corners, ids, cv::aruco::DetectorParameters::create(), rejecteds);
 
-	// 
+	//
+	cv::aruco::
 
 	// 
 	cv::Size sz(int(squareWidth * squareLength), int(squareHeight * squareLength));

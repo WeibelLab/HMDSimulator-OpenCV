@@ -353,5 +353,5 @@ MigrationBackup/
 .ionide/
 
 # Opencv library folder
-opencv2/
+opencv2/x64
 
