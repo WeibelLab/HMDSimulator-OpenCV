@@ -2,6 +2,10 @@
 #include <opencv2/aruco/charuco.hpp>
 #include <opencv2/aruco/dictionary.hpp>
 
+typedef void(__stdcall* DebugCallback) (const char* str);
+
+void DebugLogInUnity(std::string message);
+
 extern "C"
 {
 	#define DLL_EXPORT __declspec(dllexport) 
@@ -33,6 +37,8 @@ extern "C"
 	//	DICT_APRILTAG_36h11     ///< 6x6 bits, minimum hamming distance between any two codes = 11, 587 codes
 	//};
 
+	DLL_EXPORT void RegisterDebugCallback(DebugCallback callback);
+
 	DLL_EXPORT bool Aruco_DrawMarker(int predefinedDict, int markerId, int markerSize, bool border, unsigned char* rgbOutput);
 
 	DLL_EXPORT int Aruco_EstimateMarkersPose(
@@ -47,7 +53,7 @@ extern "C"
 
 	DLL_EXPORT bool Aruco_DrawCharucoBoard(int detectorHandle, unsigned char* rgbOutput);
 
-	DLL_EXPORT int Aruco_CollectCharucoCorners(int detectorHandle, unsigned char* rgbInput, int width, int height);
+	DLL_EXPORT int Aruco_CollectCharucoCorners(int detectorHandle, unsigned char* rgbInput, int width, int height, unsigned char* rgbOutput = nullptr);
 
 	DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle);
 }
