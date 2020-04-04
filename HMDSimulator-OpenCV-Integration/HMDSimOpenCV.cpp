@@ -16,6 +16,11 @@ void DebugLogInUnity(std::string message) {
   }
 }
 
+template<typename _Ty>
+std::vector<_Ty> mat2vector(const cv::Mat & mat) {
+  return std::vector<_Ty>(mat.reshape(1, 1));
+}
+
 extern "C" {
 DLL_EXPORT void RegisterDebugCallback(DebugCallback callback) {
   if (callback) {
@@ -156,8 +161,6 @@ DLL_EXPORT int Aruco_CollectCharucoCorners(
     std::vector<int> ids;
     cv::aruco::detectMarkers(bwInput, dict, corners, ids, cv::aruco::DetectorParameters::create(), rejecteds);
 
-    
-
     if (corners.size() >= 3) {
 
       // Transform corners
@@ -206,15 +209,15 @@ DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle) {
 
     arucoDetector->cameraMatrix = cameraMatrix;
     arucoDetector->distCoeff = distCoeff;
-
+    arucoDetector->calibrated = true;
     {
       std::stringstream buffer;
-      buffer << cameraMatrix;
+      buffer << arucoDetector->cameraMatrix;
       DebugLogInUnity(buffer.str());
     }
     {
       std::stringstream buffer;
-      buffer << distCoeff;
+      buffer << arucoDetector->distCoeff;
       DebugLogInUnity(buffer.str());
     }
 
@@ -226,13 +229,79 @@ DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle) {
   }
 }
 
+DLL_EXPORT int Aruco_GetCalibrateResult(int detectorHandle, float* cameraMatrix, float* distCoeffs) {
+  try {
+    // try get arucoDetector object
+    std::shared_ptr<ArucoDetector> arucoDetector = arucoDetectorMap[detectorHandle];
+
+    if (!arucoDetector->calibrated) {
+      return -1;
+    }
+
+    if (cameraMatrix != nullptr) {
+      memcpy(cameraMatrix, arucoDetector->cameraMatrix.data, 9 * sizeof(float));
+    }
+
+    int size = arucoDetector->distCoeff.total();
+    if (distCoeffs != nullptr) {
+      memcpy(distCoeffs, arucoDetector->distCoeff.data, size * sizeof(float));
+    }
+
+    return size;
+  }
+  catch (std::exception& e) {
+    DebugLogInUnity(e.what());
+    return -2;
+  }
+}
+
+DLL_EXPORT int Aruco_EstimateMarkersPoseWithDetector(
+  unsigned char* rgbInput, int width, int height, int predefinedDict, float markerLength, int detectorHandle,
+  int expectedMarkerCount, float outputMarkerPosVec3[], float outputMarkerRotVec3[], int outputMarkerIds[], unsigned char* rgbOutput) {
+
+  try {
+    // try get arucoDetector object
+    std::shared_ptr<ArucoDetector> arucoDetector = arucoDetectorMap[detectorHandle];
+
+    if (!arucoDetector->calibrated) {
+      return -1;
+    }
+
+    int distCoeffLength = arucoDetector->distCoeff.total();
+
+    /*{
+      std::stringstream buffer;
+      buffer << arucoDetector->cameraMatrix;
+      DebugLogInUnity(buffer.str());
+    }
+
+    {
+      std::stringstream buffer;
+      buffer << arucoDetector->distCoeff;
+      DebugLogInUnity(buffer.str());
+    }*/
+
+    std::vector<float>cameraMatrix = mat2vector<float>(arucoDetector->cameraMatrix);
+    std::vector<float>distCoeff = mat2vector<float>(arucoDetector->distCoeff);
+    int ret = Aruco_EstimateMarkersPose(
+      rgbInput, width, height, predefinedDict, markerLength, cameraMatrix.data(),
+      distCoeff.data(), distCoeffLength, expectedMarkerCount, outputMarkerPosVec3,
+      outputMarkerRotVec3, outputMarkerIds, rgbOutput);
+    return ret;
+  }
+  catch (std::exception& e) {
+    DebugLogInUnity(e.what());
+    return -2;
+  }
+}
+
 DLL_EXPORT int Aruco_EstimateMarkersPose(
   unsigned char* rgbInput, int width, int height,
   int predefinedDict, float markerLength,
   float cameraMatrix[],
   float distCoeffs[], int distCoeffLength,
   int expectedMarkerCount,
-  float outputMarkerPosVec3[], float outputMarkerRotVec3[], int outputMarkerIds[]) {
+  float outputMarkerPosVec3[], float outputMarkerRotVec3[], int outputMarkerIds[], unsigned char * rgbOutput) {
   if (rgbInput == nullptr || cameraMatrix == nullptr ||
     distCoeffs == nullptr ||
     outputMarkerPosVec3 == nullptr || outputMarkerRotVec3 == nullptr || outputMarkerIds == nullptr)
@@ -240,6 +309,8 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
 
   try {
     cv::Mat image(height, width, CV_8UC3, rgbInput);
+
+    // DebugLogInUnity("parameter:" + std::to_string(predefinedDict) + "," + std::to_string(markerLength));
 
     // gets a default dictionary
     auto dict = cv::aruco::getPredefinedDictionary(predefinedDict);
@@ -271,17 +342,78 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
       for (unsigned int i = 0; i < positionsToCopyBack; ++i) {
         outputMarkerIds[i] = ids[i];
         const int i3 = i * 3;
+        const int i9 = i * 9;
+
+        // https://github.com/opencv/opencv/issues/8813#issuecomment-390462446
+        cv::Mat rot;
+        cv::Rodrigues(rvecs[i], rot);
+
+        // Y-up
+        static double switchAxisData[9] = {
+          1,0,0,
+          0,0,-1,
+          0,1,0 };
+        static cv::Mat switchAxis = cv::Mat(3, 3, CV_64F, switchAxisData);
+        //rot *= switchAxis;
+
+        //if (rot.at<double>(1,1) < 1 && rot.at<double>(1, 1) > 0) {
+        //  // flip pose
+
+        //  // flip axes
+        //  static double flipAxisData[9] = {
+        //    1,-1,1,
+        //    1,-1,1,
+        //    -1,1,-1};
+        //  static cv::Mat flipAxis = cv::Mat(3, 3, CV_64F, flipAxisData);
+        //  rot *= flipAxis;
+
+        //  // Fixup
+        //  cv::Vec3d T = tvecs[i];
+        //  cv::Vec3d forward(0,0,1);
+        //  cv::Vec3d tnorm = cv::normalize(forward);
+
+        //  cv::Vec3d axis = tnorm.cross(forward);
+
+        //  double angle = -2.0 * std::acos(tnorm.dot(forward));
+        //  cv::Mat fixup;
+        //  cv::Rodrigues(angle * axis, fixup);
+        //  rot = fixup * rot;
+        //}
+
+        cv::Vec3d fixedRot;
+        cv::Rodrigues(rot, fixedRot);
 
         // copy rotation
-        outputMarkerRotVec3[i3] = (float)rvecs[i][0];
-        outputMarkerRotVec3[i3 + 1] = (float)rvecs[i][1];
-        outputMarkerRotVec3[i3 + 2] = (float)rvecs[i][2];
+        /*outputMarkerRotVec3[i3] = (float)fixedRot[0];
+        outputMarkerRotVec3[i3 + 1] = (float)fixedRot[1];
+        outputMarkerRotVec3[i3 + 2] = (float)fixedRot[2];*/
+
+        outputMarkerRotVec3[i9] = (float)rot.at<double>(0, 0);
+        outputMarkerRotVec3[i9 + 1] = (float)rot.at<double>(0, 1);
+        outputMarkerRotVec3[i9 + 2] = (float)rot.at<double>(0, 2);
+
+        outputMarkerRotVec3[i9 + 3] = (float)rot.at<double>(1, 0);
+        outputMarkerRotVec3[i9 + 4] = (float)rot.at<double>(1, 1);
+        outputMarkerRotVec3[i9 + 5] = (float)rot.at<double>(1, 2);
+
+        outputMarkerRotVec3[i9 + 6] = (float)rot.at<double>(2, 0);
+        outputMarkerRotVec3[i9 + 7] = (float)rot.at<double>(2, 1);
+        outputMarkerRotVec3[i9 + 8] = (float)rot.at<double>(2, 2);
 
         // copy translation
         outputMarkerPosVec3[i3] = (float)tvecs[i][0];
         outputMarkerPosVec3[i3 + 1] = (float)tvecs[i][1];
         outputMarkerPosVec3[i3 + 2] = (float)tvecs[i][2];
+
+
       }
+
+      /*if (rgbOutput) {
+        cv::Mat output(image);
+        cv::drawFrameAxes(output, cameraIntrinsics, cameraDistortion, rvecs, tvecs, markerLength * 0.5f);
+
+        memcpy(rgbOutput, output.data, (width * height) * sizeof(unsigned char) * 3);
+      }*/
 
       return positionsToCopyBack;
     }
