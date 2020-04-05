@@ -322,7 +322,9 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
     // Detect corners
     std::vector<std::vector<cv::Point2f>> corners, rejecteds;
     std::vector<int> ids;
-    cv::aruco::detectMarkers(bwInput, dict, corners, ids, cv::aruco::DetectorParameters::create(), rejecteds);
+    auto param = cv::aruco::DetectorParameters::create();
+    param->cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+    cv::aruco::detectMarkers(bwInput, dict, corners, ids, param, rejecteds);
 
     // Did we find anything?
     if (ids.size() >= 0) {
