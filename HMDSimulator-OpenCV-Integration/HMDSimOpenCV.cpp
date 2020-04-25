@@ -429,4 +429,163 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
     return -1; // if something goes wrong, we just return -1 to let the user know
   }
 }
+
+DLL_EXPORT float SPAAM_Solve(float* alignments, int alignmentCount, float* resultMatrix, bool affine, bool is3Dto2D, bool getError) {
+
+  try {
+
+    cv::Mat1f A;
+    cv::Mat1f B;
+    if (!is3Dto2D) {
+      if (affine) {
+        SPAAM_CreateAffineEquation(alignments, alignmentCount, A, B);
+      }
+      else {
+        SPAAM_CreatePerspectiveEquation(alignments, alignmentCount, A, B);
+      }
+    }else {
+      
+    }
+
+    // Solve Ax=B
+    cv::Mat result;
+    if (affine && !is3Dto2D) {
+      cv::solve(A, B, result, cv::DECOMP_SVD);
+    }else {
+      cv::Mat w, u, vt;
+      cv::SVD::compute(A, w, u, vt, cv::SVD::FULL_UV);
+      /*{
+        std::stringstream buffer;
+        buffer << w;
+        DebugLogInUnity(buffer.str());
+      }
+      {
+        std::stringstream buffer;
+        buffer << vt;
+        DebugLogInUnity(buffer.str());
+      }*/
+      result = vt.row(vt.rows - 1);
+      result = result.t();
+    }
+
+    float error = -1;
+    if(getError) {
+      error = cv::norm(A * result - B);
+    }
+
+    std::vector<float>resultVector = mat2vector<float>(result);
+    if(resultMatrix!=nullptr) {
+      memcpy(resultMatrix, resultVector.data(), resultVector.size() * sizeof(float));
+    }
+    return error;
+  }
+  catch (std::exception & e) {
+    DebugLogInUnity(e.what());
+    return -2;
+  }
+}
+}
+
+bool SPAAM_CreateAffineEquation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B) {
+  A = cv::Mat1f::zeros(3 * alignmentCount, 12);
+  B = cv::Mat1f::zeros(3 * alignmentCount, 1);
+  for(int i = 0; i < alignmentCount; i ++) {
+    int pairStep = 6 * i;
+    int step = 3 * i;
+
+    // Equation 1
+    A[step][0] = alignments[pairStep];
+    A[step][1] = alignments[pairStep + 1];
+    A[step][2] = alignments[pairStep + 2];
+    A[step][3] = 1;
+    B[step][0] = alignments[pairStep + 3];
+
+    // Equation 2
+    A[step + 1][4] = alignments[pairStep];
+    A[step + 1][5] = alignments[pairStep + 1];
+    A[step + 1][6] = alignments[pairStep + 2];
+    A[step + 1][7] = 1;
+    B[step + 1][0] = alignments[pairStep + 4];
+
+    // Equation 3
+    A[step + 2][8] = alignments[pairStep];
+    A[step + 2][9] = alignments[pairStep + 1];
+    A[step + 2][10] = alignments[pairStep + 2];
+    A[step + 2][11] = 1;
+    B[step + 2][0] = alignments[pairStep + 5];
+  }
+
+  return true;
+}
+
+bool SPAAM_CreatePerspectiveEquation(float* alignments, int alignmentCount, cv::Mat1f & A, cv::Mat1f & B) {
+  A = cv::Mat1f::zeros(3 * alignmentCount, 16);
+  B = cv::Mat1f::zeros(3 * alignmentCount, 1);
+  for (int i = 0; i < alignmentCount; i++) {
+    int pairStep = 6 * i;
+    int step = 3 * i;
+
+    // Equation 1
+    A[step][0] = alignments[pairStep];
+    A[step][1] = alignments[pairStep + 1];
+    A[step][2] = alignments[pairStep + 2];
+    A[step][3] = 1;
+    A[step][12] = -alignments[pairStep + 3] * alignments[pairStep];
+    A[step][13] = -alignments[pairStep + 3] * alignments[pairStep + 1];
+    A[step][14] = -alignments[pairStep + 3] * alignments[pairStep + 2];
+    A[step][15] = -alignments[pairStep + 3];
+
+    // Equation 2
+    A[step + 1][4] = alignments[pairStep];
+    A[step + 1][5] = alignments[pairStep + 1];
+    A[step + 1][6] = alignments[pairStep + 2];
+    A[step + 1][7] = 1;
+    A[step + 1][12] = -alignments[pairStep + 4] * alignments[pairStep];
+    A[step + 1][13] = -alignments[pairStep + 4] * alignments[pairStep + 1];
+    A[step + 1][14] = -alignments[pairStep + 4] * alignments[pairStep + 2];
+    A[step + 1][15] = -alignments[pairStep + 4];
+
+    // Equation 3
+    A[step + 2][8] = alignments[pairStep];
+    A[step + 2][9] = alignments[pairStep + 1];
+    A[step + 2][10] = alignments[pairStep + 2];
+    A[step + 2][11] = 1;
+    A[step + 2][12] = -alignments[pairStep + 5] * alignments[pairStep];
+    A[step + 2][13] = -alignments[pairStep + 5] * alignments[pairStep + 1];
+    A[step + 2][14] = -alignments[pairStep + 5] * alignments[pairStep + 2];
+    A[step + 2][15] = -alignments[pairStep + 5];
+  }
+
+  return true;
+}
+
+bool SPAAM_Create3x4Equation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B) {
+  A = cv::Mat1f::zeros(3 * alignmentCount, 12);
+  B = cv::Mat1f::zeros(3 * alignmentCount, 1);
+  for (int i = 0; i < alignmentCount; i++) {
+    int pairStep = 5 * i;
+    int step = 2 * i;
+
+    // Equation 1
+    A[step][0] = alignments[pairStep];
+    A[step][1] = alignments[pairStep + 1];
+    A[step][2] = alignments[pairStep + 2];
+    A[step][3] = 1;
+    A[step][8] = -alignments[pairStep + 3] * alignments[pairStep];
+    A[step][9] = -alignments[pairStep + 3] * alignments[pairStep + 1];
+    A[step][10] = -alignments[pairStep + 3] * alignments[pairStep + 2];
+    A[step][11] = -alignments[pairStep + 3];
+
+    // Equation 2
+    A[step + 1][4] = alignments[pairStep];
+    A[step + 1][5] = alignments[pairStep + 1];
+    A[step + 1][6] = alignments[pairStep + 2];
+    A[step + 1][7] = 1;
+    A[step + 1][8] = -alignments[pairStep + 4] * alignments[pairStep];
+    A[step + 1][9] = -alignments[pairStep + 4] * alignments[pairStep + 1];
+    A[step + 1][10] = -alignments[pairStep + 4] * alignments[pairStep + 2];
+    A[step + 1][11] = -alignments[pairStep + 4];
+  }
+
+  return true;
 }

@@ -65,8 +65,13 @@ extern "C"
 	DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle);
 
 	DLL_EXPORT int Aruco_GetCalibrateResult(int detectorHandle, float * cameraMatrix, float * distCoeffs);
+
+	DLL_EXPORT float SPAAM_Solve(float* alignments, int alignmentCount, float* resultMatrix, bool affine, bool is3Dto2D, bool getError = false);
 }
 
+bool SPAAM_CreateAffineEquation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B);
+bool SPAAM_CreatePerspectiveEquation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B);
+bool SPAAM_Create3x4Equation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B);
 
 class ArucoDetector {
 public:
