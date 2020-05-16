@@ -444,15 +444,16 @@ DLL_EXPORT float SPAAM_Solve(float* alignments, int alignmentCount, float* resul
         SPAAM_CreatePerspectiveEquation(alignments, alignmentCount, A, B);
       }
     }else {
-      
+      SPAAM_Create3x4Equation(alignments, alignmentCount, A, B);
     }
 
     // Solve Ax=B
+
+    cv::Mat w, u, vt;
     cv::Mat result;
     if (affine && !is3Dto2D) {
       cv::solve(A, B, result, cv::DECOMP_SVD);
     }else {
-      cv::Mat w, u, vt;
       cv::SVD::compute(A, w, u, vt, cv::SVD::FULL_UV);
       /*{
         std::stringstream buffer;
@@ -476,6 +477,33 @@ DLL_EXPORT float SPAAM_Solve(float* alignments, int alignmentCount, float* resul
     std::vector<float>resultVector = mat2vector<float>(result);
     if(resultMatrix!=nullptr) {
       memcpy(resultMatrix, resultVector.data(), resultVector.size() * sizeof(float));
+
+      if(is3Dto2D) {
+        resultMatrix[12] = w.at<float>(0);
+        resultMatrix[13] = w.at<float>(10);
+        cv::Mat mat = result.reshape(1, 3);
+        {
+          std::stringstream buffer;
+          buffer << mat;
+          DebugLogInUnity(buffer.str());
+        }
+        cv::Mat cam, rot, trans;
+        cv::decomposeProjectionMatrix(mat, cam, rot, trans);
+        {
+          std::stringstream buffer;
+          buffer << cam;
+          DebugLogInUnity(buffer.str());
+        }
+        {
+          std::stringstream buffer;
+          buffer << rot;
+          DebugLogInUnity(buffer.str());
+        }
+        resultMatrix[14] = trans.at<float>(0);
+        resultMatrix[15] = trans.at<float>(1);
+        resultMatrix[16] = trans.at<float>(2);
+        resultMatrix[17] = trans.at<float>(3);
+      }
     }
     return error;
   }
@@ -560,8 +588,8 @@ bool SPAAM_CreatePerspectiveEquation(float* alignments, int alignmentCount, cv::
 }
 
 bool SPAAM_Create3x4Equation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B) {
-  A = cv::Mat1f::zeros(3 * alignmentCount, 12);
-  B = cv::Mat1f::zeros(3 * alignmentCount, 1);
+  A = cv::Mat1f::zeros(2 * alignmentCount, 12);
+  B = cv::Mat1f::zeros(2 * alignmentCount, 1);
   for (int i = 0; i < alignmentCount; i++) {
     int pairStep = 5 * i;
     int step = 2 * i;
