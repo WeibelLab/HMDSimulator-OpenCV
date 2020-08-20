@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\opencv2">
+      <UniqueIdentifier>{defe3749-d560-444e-b96a-42a633a9fe2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\opencv2\aruco">
+      <UniqueIdentifier>{0ca781ce-21a9-46fe-b541-3d7e3a57395a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\opencv2">
+      <UniqueIdentifier>{2bdb7ebc-a8a7-452e-b18b-0449026e2f84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\opencv2\aruco">
+      <UniqueIdentifier>{a317b164-acb3-4642-8eae-9484bccaed2a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -24,6 +36,27 @@
     <ClInclude Include="HMDSimOpenCV.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="opencv2\src\apriltag_quad_thresh.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\precomp.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\predefined_dictionaries.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\predefined_dictionaries_apriltag.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\unionfind.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\zarray.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\zmaxheap.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -34,6 +67,21 @@
     </ClCompile>
     <ClCompile Include="HMDSimOpenCV.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\apriltag_quad_thresh.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\aruco.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\charuco.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\dictionary.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\zmaxheap.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

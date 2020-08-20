@@ -3,8 +3,10 @@
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
-#include <opencv2/aruco.hpp>
-#include <opencv2/aruco/charuco.hpp>
+
+// ARUCO is included locally
+#include "opencv2/aruco.hpp"
+#include "opencv2/aruco/charuco.hpp"
 
 std::map<int, std::shared_ptr<ArucoDetector>> arucoDetectorMap;
 
