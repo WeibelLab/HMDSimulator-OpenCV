@@ -25,8 +25,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="pch.cpp" />
     <ClCompile Include="opencv2\src\apriltag_quad_thresh.cpp">
       <Filter>Source Files\opencv2\aruco</Filter>
     </ClCompile>
@@ -42,10 +40,17 @@
     <ClCompile Include="opencv2\src\zmaxheap.cpp">
       <Filter>Source Files\opencv2\aruco</Filter>
     </ClCompile>
+    <ClCompile Include="..\HMDSimulator-OpenCV-Integration\HMDSimOpenCV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="targetver.h" />
     <ClInclude Include="opencv2\src\apriltag_quad_thresh.hpp">
       <Filter>Header Files\opencv2\aruco</Filter>
     </ClInclude>
@@ -66,6 +71,15 @@
     </ClInclude>
     <ClInclude Include="opencv2\src\zmaxheap.hpp">
       <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HMDSimulator-OpenCV-Integration\HMDSimOpenCV.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
