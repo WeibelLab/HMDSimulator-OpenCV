@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{bc3ef1b4-f5eb-4a13-b8db-cce2f68b0db6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{c5df31c1-5080-4ba3-b172-8478599f7ff8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\opencv2">
+      <UniqueIdentifier>{4e88c5ba-86cb-4343-aed8-247b64322ad2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\opencv2\aruco">
+      <UniqueIdentifier>{fc62f69e-3aa3-4ff9-b79e-8ebb149e3bf3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\opencv2">
+      <UniqueIdentifier>{38c713ba-0e93-4bdd-8594-3f357e7334aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\opencv2\aruco">
+      <UniqueIdentifier>{04e30274-c39c-4939-86ba-956c7f26e479}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="opencv2\src\apriltag_quad_thresh.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\aruco.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\charuco.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\dictionary.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+    <ClCompile Include="opencv2\src\zmaxheap.cpp">
+      <Filter>Source Files\opencv2\aruco</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="opencv2\src\apriltag_quad_thresh.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\precomp.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\predefined_dictionaries.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\predefined_dictionaries_apriltag.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\unionfind.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\zarray.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv2\src\zmaxheap.hpp">
+      <Filter>Header Files\opencv2\aruco</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
