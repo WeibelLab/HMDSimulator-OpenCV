@@ -64,7 +64,10 @@ extern "C"
 
 	DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle);
 
+	// returns dist coeffs length (or negative if failed);
 	DLL_EXPORT int Aruco_GetCalibrateResult(int detectorHandle, float * cameraMatrix, float * distCoeffs);
+
+	DLL_EXPORT bool Aruco_SetCameraIntrinsics(int detectorHandle, float* cameraMatrix, float* distCoeffs, int distCoeffsLength);
 
 	DLL_EXPORT float SPAAM_Solve(float* alignments, int alignmentCount, float* resultMatrix, bool affine, bool is3Dto2D, bool getError = false);
 }
@@ -73,19 +76,25 @@ bool SPAAM_CreateAffineEquation(float* alignments, int alignmentCount, cv::Mat1f
 bool SPAAM_CreatePerspectiveEquation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B);
 bool SPAAM_Create3x4Equation(float* alignments, int alignmentCount, cv::Mat1f& A, cv::Mat1f& B);
 
-class ArucoDetector {
+class ArucoDetector
+{
 public:
 	int imageWidth = -1;
 	int imageHeight = -1;
 	int detectorHandle;
-	int predefinedDict;
-	int squareWidth;
-	int squareHeight;
-  float squareLength;
+
+	int predefinedDict; // marker dictionary used for the 
+
+	int squareWidth;  // square width (pixels)
+	int squareHeight; // square height (pixels)
+
+    float squareLength; // square length in a user defined system (e.g., meters)
 	float markerLength;
+
 	bool border;
 
 	bool calibrated = false;
+	bool warnedUserAboutCalibration = false; // if true, it means that we have already warned users that the camera wasn't calibrated
 
 	cv::Ptr<cv::aruco::Dictionary> dict;
 	cv::Ptr<cv::aruco::CharucoBoard> chBoard;

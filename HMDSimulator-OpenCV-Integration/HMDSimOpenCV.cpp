@@ -30,6 +30,15 @@ DLL_EXPORT void RegisterDebugCallback(DebugCallback callback) {
   }
 }
 
+/// <summary>
+/// Creates a texture for an ArUco marker
+/// </summary>
+/// <param name="predefinedDict"></param>
+/// <param name="markerId"></param>
+/// <param name="markerSize"></param>
+/// <param name="border"></param>
+/// <param name="rgbOutput"></param>
+/// <returns></returns>
 DLL_EXPORT bool Aruco_DrawMarker(
   int predefinedDict, int markerId, int markerSize, bool border, unsigned char* rgbOutput) {
   try {
@@ -47,7 +56,7 @@ DLL_EXPORT bool Aruco_DrawMarker(
 
     // copies to unity (yes, I know, a lot of copies)
     if (rgbOutput != nullptr) {
-      memcpy(rgbOutput, destMatrix.data, (markerSize * markerSize) * sizeof(unsigned char) * 3);
+      memcpy(rgbOutput, destMatrix.data, (markerSize * (long) markerSize) * sizeof(unsigned char) * 3);
       return true;
     }
   }
@@ -115,7 +124,7 @@ DLL_EXPORT bool Aruco_DrawCharucoBoard(int detectorHandle, unsigned char* rgbOut
 
     // copies to unity (yes, I know, a lot of copies)
     if (rgbOutput != nullptr) {
-      memcpy(rgbOutput, destMatrix.data, (sz.width * sz.height) * sizeof(unsigned char) * 3);
+      memcpy(rgbOutput, destMatrix.data, (sz.width * (long) sz.height) * sizeof(unsigned char) * 3);
       return true;
     }
   }
@@ -181,7 +190,7 @@ DLL_EXPORT int Aruco_CollectCharucoCorners(
           cv::Mat output(image);
           cv::aruco::drawDetectedCornersCharuco(output, charucoCorners, charucoIds);
 
-          memcpy(rgbOutput, output.data, (width * height) * sizeof(unsigned char) * 3);
+          memcpy(rgbOutput, output.data, (width * (long) height) * sizeof(unsigned char) * 3);
         }
 
         return numOfCorners;
@@ -214,12 +223,12 @@ DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle) {
     arucoDetector->calibrated = true;
     {
       std::stringstream buffer;
-      buffer << arucoDetector->cameraMatrix;
+      buffer << "Calibration intrinsics: " << arucoDetector->cameraMatrix;
       DebugLogInUnity(buffer.str());
     }
     {
       std::stringstream buffer;
-      buffer << arucoDetector->distCoeff;
+      buffer << "Dist. Coeff.: " << arucoDetector->distCoeff;
       DebugLogInUnity(buffer.str());
     }
 
@@ -231,27 +240,86 @@ DLL_EXPORT double Aruco_CalibrateCameraCharuco(int detectorHandle) {
   }
 }
 
+DLL_EXPORT bool Aruco_SetCameraIntrinsics(int detectorHandle, float* cameraMatrix, float* distCoeffs, int distCoeffsLength)
+{
+
+    try {
+
+        // try get arucoDetector object
+        std::shared_ptr<ArucoDetector> arucoDetector = arucoDetectorMap[detectorHandle];
+
+        // make sure that we have a valid array (as it depends on the calibration model)
+        if (distCoeffs != nullptr)
+        {
+            int finalDistCoeffsLength = distCoeffsLength;
+            if (distCoeffsLength < 4)                                finalDistCoeffsLength = 4;
+            else if (distCoeffsLength > 5 && distCoeffsLength < 8)   finalDistCoeffsLength = 8;
+            else if (distCoeffsLength > 8 && distCoeffsLength < 12)  finalDistCoeffsLength = 12;
+            else if (distCoeffsLength > 12 && distCoeffsLength < 14) finalDistCoeffsLength = 14;
+            else if (distCoeffsLength > 14)                          finalDistCoeffsLength = 14;
+
+            // alocate memory
+            arucoDetector->distCoeff = cv::Mat1d(1, finalDistCoeffsLength, 0.0);
+            if (distCoeffsLength > 0)
+                memcpy(arucoDetector->distCoeff.data, distCoeffs, distCoeffsLength * sizeof(float));
+        }
+        else {
+            // no distortion
+            arucoDetector->distCoeff = cv::Mat::zeros(1, 5, CV_32FC1);
+        }
+    
+        if (cameraMatrix != nullptr)
+        {
+            arucoDetector->cameraMatrix = cv::Mat::zeros(3, 3, CV_32FC1);
+            memcpy(arucoDetector->cameraMatrix.data, cameraMatrix, 9 * sizeof(float));
+            arucoDetector->calibrated = true;
+        }
+
+        {
+            std::stringstream buffer;
+            buffer << "Set custom Calibration Intrinsics: " << arucoDetector->cameraMatrix;
+            DebugLogInUnity(buffer.str());
+        }
+        {
+            std::stringstream buffer;
+            buffer << "Set custom Dist. Coeff.: " << arucoDetector->distCoeff;
+            DebugLogInUnity(buffer.str());
+        }
+
+        return true;
+    }
+    catch (std::exception& e) {
+        DebugLogInUnity(e.what());
+        return false;
+    }
+}
+
+
 DLL_EXPORT int Aruco_GetCalibrateResult(int detectorHandle, float* cameraMatrix, float* distCoeffs) {
   try {
     // try get arucoDetector object
     std::shared_ptr<ArucoDetector> arucoDetector = arucoDetectorMap[detectorHandle];
 
-    if (!arucoDetector->calibrated) {
+    if (!arucoDetector->calibrated)
+    {
       return -1;
     }
 
-    if (cameraMatrix != nullptr) {
+    if (cameraMatrix != nullptr)
+    {
       memcpy(cameraMatrix, arucoDetector->cameraMatrix.data, 9 * sizeof(float));
     }
 
     int size = arucoDetector->distCoeff.total();
-    if (distCoeffs != nullptr) {
+    if (distCoeffs != nullptr)
+    {
       memcpy(distCoeffs, arucoDetector->distCoeff.data, size * sizeof(float));
     }
 
     return size;
   }
-  catch (std::exception& e) {
+  catch (std::exception& e)
+  {
     DebugLogInUnity(e.what());
     return -2;
   }
@@ -266,6 +334,11 @@ DLL_EXPORT int Aruco_EstimateMarkersPoseWithDetector(
     std::shared_ptr<ArucoDetector> arucoDetector = arucoDetectorMap[detectorHandle];
 
     if (!arucoDetector->calibrated) {
+        if (!arucoDetector->warnedUserAboutCalibration)
+        {
+            arucoDetector->warnedUserAboutCalibration = true;
+            DebugLogInUnity("Unable to track aruco markers if the camera intrinsics are not available!");
+        }
       return -1;
     }
 
@@ -303,13 +376,20 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
   float cameraMatrix[],
   float distCoeffs[], int distCoeffLength,
   int expectedMarkerCount,
-  float outputMarkerPosVec3[], float outputMarkerRotVec3[], int outputMarkerIds[], unsigned char * rgbOutput) {
+  float outputMarkerPosVec3[], float outputMarkerRotVec3[], int outputMarkerIds[], unsigned char * rgbOutput)
+{
+
   if (rgbInput == nullptr || cameraMatrix == nullptr ||
     distCoeffs == nullptr ||
     outputMarkerPosVec3 == nullptr || outputMarkerRotVec3 == nullptr || outputMarkerIds == nullptr)
+  {
+    DebugLogInUnity("Aruco_EstimateMarkersPose called with missing parameters!");
     return -1;
+  }
 
-  try {
+  try
+  {
+    // wraps Unity byte buffer in a cv::Mat
     cv::Mat image(height, width, CV_8UC3, rgbInput);
 
     // DebugLogInUnity("parameter:" + std::to_string(predefinedDict) + "," + std::to_string(markerLength));
@@ -325,11 +405,13 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
     std::vector<std::vector<cv::Point2f>> corners, rejecteds;
     std::vector<int> ids;
     auto param = cv::aruco::DetectorParameters::create();
-    param->cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+    //param->cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+
     cv::aruco::detectMarkers(bwInput, dict, corners, ids, param, rejecteds);
 
     // Did we find anything?
-    if (ids.size() >= 0) {
+    if (ids.size() >= 0)
+    {
       // if we did, then we now find their transformation to 3D
       cv::Mat cameraIntrinsics(3, 3, CV_32F, cameraMatrix);
       cv::Mat cameraDistortion(1, distCoeffLength, CV_32F, distCoeffs);
@@ -343,7 +425,8 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
       // now serialize it back for unity to use it
 
       int positionsToCopyBack = std::min(expectedMarkerCount, (int)ids.size());
-      for (unsigned int i = 0; i < positionsToCopyBack; ++i) {
+      for (unsigned int i = 0; i < positionsToCopyBack; ++i)
+      {
         outputMarkerIds[i] = ids[i];
         const int i3 = i * 3;
         const int i9 = i * 9;
@@ -412,23 +495,50 @@ DLL_EXPORT int Aruco_EstimateMarkersPose(
 
       }
 
-      /*if (rgbOutput) {
-        cv::Mat output(image);
-        cv::drawFrameAxes(output, cameraIntrinsics, cameraDistortion, rvecs, tvecs, markerLength * 0.5f);
 
-        memcpy(rgbOutput, output.data, (width * height) * sizeof(unsigned char) * 3);
-      }*/
+      if (rgbOutput)
+      {
+          cv::Mat output(image);
+
+          if (corners.size() > 0)
+              cv::aruco::drawDetectedMarkers(output, corners, ids, cv::Scalar(255, 0, 0));
+
+
+          // did we find anything?
+          if (tvecs.size() > 0)
+              cv::drawFrameAxes(output, cameraIntrinsics, cameraDistortion, rvecs, tvecs, markerLength * 0.5f);
+
+          
+
+          // what else did we find and not detect?
+          if (rejecteds.size() > 0)
+              cv::aruco::drawDetectedMarkers(output, rejecteds, cv::noArray(), cv::Scalar(255, 0, 0));
+
+          memcpy(rgbOutput, output.data, (width * height) * sizeof(unsigned char) * 3);
+      }
 
       return positionsToCopyBack;
     }
     else {
+
+
+        if (rgbOutput)
+        {
+            cv::Mat output(image);
+            // what else did we find and not detect?
+            if (rejecteds.size() > 0)
+                cv::aruco::drawDetectedMarkers(output, rejecteds, cv::noArray(), cv::Scalar(255, 0, 0));
+            memcpy(rgbOutput, output.data, (width * height) * sizeof(unsigned char) * 3);
+        }
+
+
       return 0; // we did not find anything
     }
 
   }
   catch (std::exception e) {
     DebugLogInUnity(e.what());
-    return -1; // if something goes wrong, we just return -1 to let the user know
+    return -2; // if something goes wrong because of an exception (probably our fault?), we just return -2 to let the user know
   }
 }
 
