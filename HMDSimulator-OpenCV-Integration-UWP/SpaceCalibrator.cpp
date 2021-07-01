@@ -72,7 +72,7 @@ int PerformCalibration(int handle) {
     // try get Calibrator object
     std::shared_ptr<Calibrator> spaceCalibrator = CalibratorMap[handle];
 
-    spaceCalibrator->eulerdeg = CalibrateRotation(spaceCalibrator->samples);
+    spaceCalibrator->rot = CalibrateRotation(spaceCalibrator->samples);
     spaceCalibrator->trans = CalibrateTranslation(spaceCalibrator->samples);
 
     return spaceCalibrator->samples.size();
@@ -91,17 +91,12 @@ int GetRotationQuat(int handle, float* rot) {
     // try get Calibrator object
     std::shared_ptr<Calibrator> spaceCalibrator = CalibratorMap[handle];
 
-    auto euler = spaceCalibrator->eulerdeg * EIGEN_PI / 180.0;
+    Eigen::Quaterniond q(spaceCalibrator->rot);
 
-    Eigen::Quaterniond rotQuat =
-      Eigen::AngleAxisd(euler(0), Eigen::Vector3d::UnitZ()) *
-      Eigen::AngleAxisd(euler(1), Eigen::Vector3d::UnitY()) *
-      Eigen::AngleAxisd(euler(2), Eigen::Vector3d::UnitX());
-
-    rot[0] = rotQuat.coeffs()[0];
-    rot[1] = rotQuat.coeffs()[1];
-    rot[2] = rotQuat.coeffs()[2];
-    rot[3] = rotQuat.coeffs()[3];
+    rot[0] = q.x();
+    rot[1] = q.y();
+    rot[2] = q.z();
+    rot[3] = q.w();
 
     return spaceCalibrator->samples.size();
   }
@@ -162,7 +157,7 @@ DSample DeltaRotationSamples(Sample s1, Sample s2) {
   return ds;
 }
 
-Eigen::Vector3d CalibrateRotation(const std::vector<Sample>& samples) {
+Eigen::Matrix3d CalibrateRotation(const std::vector<Sample>& samples) {
   std::vector<DSample> deltas;
 
   for (size_t i = 0; i < samples.size(); i++) {
@@ -209,11 +204,12 @@ Eigen::Vector3d CalibrateRotation(const std::vector<Sample>& samples) {
   Eigen::Matrix3d rot = svd.matrixV() * i * svd.matrixU().transpose();
   rot.transposeInPlace();
 
-  Eigen::Vector3d euler = rot.eulerAngles(2, 1, 0) * 180.0 / EIGEN_PI;
+  //Eigen::Vector3d euler = rot.eulerAngles(2, 1, 0) * 180.0 / EIGEN_PI;
 
   //snprintf(buf, sizeof buf, "Calibrated rotation: yaw=%.2f pitch=%.2f roll=%.2f\n", euler[1], euler[2], euler[0]);
   //CalCtx.Log(buf);
-  return euler;
+  //return euler;
+  return rot;
 }
 
 Eigen::Vector3d CalibrateTranslation(const std::vector<Sample>& samples) {
@@ -254,4 +250,35 @@ Eigen::Vector3d CalibrateTranslation(const std::vector<Sample>& samples) {
   //snprintf(buf, sizeof buf, "Calibrated translation x=%.2f y=%.2f z=%.2f\n", transcm[0], transcm[1], transcm[2]);
   //CalCtx.Log(buf);
   return trans;
+}
+
+int GetSamples(int handle, int index, int isRef, float* trans, float* rot) {
+  try {
+
+    // try get Calibrator object
+    std::shared_ptr<Calibrator> spaceCalibrator = CalibratorMap[handle];
+
+    if(index >= spaceCalibrator->samples.size()) {
+      return -1;
+    }
+
+    Sample curr = spaceCalibrator->samples[index];
+    if(isRef) {
+      trans[0] = curr.ref.trans.x();
+      trans[1] = curr.ref.trans.y();
+      trans[2] = curr.ref.trans.z();
+
+    }else {
+      trans[0] = curr.target.trans.x();
+      trans[1] = curr.target.trans.y();
+      trans[2] = curr.target.trans.z();
+    }
+
+    return spaceCalibrator->samples.size();
+  }
+  catch (std::exception & e) {
+    // do nothing
+    //DebugLogInUnity(e.what());
+    return -1;
+  }
 }

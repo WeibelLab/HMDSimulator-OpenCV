@@ -36,7 +36,7 @@ public:
   int handle;
   std::vector<Sample> samples;
 
-  Eigen::Vector3d eulerdeg;
+  Eigen::Matrix3d rot;
   Eigen::Vector3d trans;
 };
 
@@ -45,6 +45,7 @@ extern "C"
 #define DLL_EXPORT __declspec(dllexport) 
   DLL_EXPORT int CreateCalibrator();
   DLL_EXPORT int AddSamples(int handle, float* refMatrix4x4, float* targetMatrix4x4);
+  DLL_EXPORT int GetSamples(int handle, int index, int isRef, float* trans, float* rot);
   DLL_EXPORT int ClearSamples(int handle);
 
   DLL_EXPORT int PerformCalibration(int handle);
@@ -59,7 +60,7 @@ double AngleFromRotationMatrix3(Eigen::Matrix3d rot);
 
 DSample DeltaRotationSamples(Sample s1, Sample s2);
 
-Eigen::Vector3d CalibrateRotation(const std::vector<Sample>& samples);
+Eigen::Matrix3d CalibrateRotation(const std::vector<Sample>& samples);
 
 Eigen::Vector3d CalibrateTranslation(const std::vector<Sample>& samples);
 
