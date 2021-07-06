@@ -65,6 +65,20 @@ int ClearSamples(int handle) {
   }
 }
 
+static std::string toString(const Eigen::MatrixXd& mat) {
+  std::stringstream ss;
+  ss << mat;
+  return ss.str();
+}
+
+void ApplyRotation(std::shared_ptr<Calibrator> cal) {
+  // apply rotation to samples
+  for(int i = 0; i < cal->samples.size(); i ++) {
+    auto & curr = cal->samples[i];
+    curr.target.trans = cal->rot * curr.target.trans;
+    curr.target.rot = cal->rot * curr.target.rot;
+  }
+}
 
 int PerformCalibration(int handle) {
   try {
@@ -73,7 +87,14 @@ int PerformCalibration(int handle) {
     std::shared_ptr<Calibrator> spaceCalibrator = CalibratorMap[handle];
 
     spaceCalibrator->rot = CalibrateRotation(spaceCalibrator->samples);
-    spaceCalibrator->trans = CalibrateTranslation(spaceCalibrator->samples);
+    //OutputDebugStringA(toString(spaceCalibrator->rot).c_str());
+    //OutputDebugStringA("\n");
+
+    //OutputDebugStringA(toString(spaceCalibrator->samples[0].ref.rot).c_str());
+    //ApplyRotation(spaceCalibrator);
+    //OutputDebugStringA(toString(spaceCalibrator->samples[0].ref.rot).c_str());
+
+    spaceCalibrator->trans = CalibrateTranslation(spaceCalibrator->rot, spaceCalibrator->samples);
 
     return spaceCalibrator->samples.size();
   }
@@ -209,25 +230,26 @@ Eigen::Matrix3d CalibrateRotation(const std::vector<Sample>& samples) {
   //snprintf(buf, sizeof buf, "Calibrated rotation: yaw=%.2f pitch=%.2f roll=%.2f\n", euler[1], euler[2], euler[0]);
   //CalCtx.Log(buf);
   //return euler;
+
   return rot;
 }
 
-Eigen::Vector3d CalibrateTranslation(const std::vector<Sample>& samples) {
+Eigen::Vector3d CalibrateTranslation(const Eigen::Matrix3d rot, const std::vector<Sample>& samples) {
   std::vector<std::pair<Eigen::Vector3d, Eigen::Matrix3d>> deltas;
 
   for (size_t i = 0; i < samples.size(); i++) {
     for (size_t j = 0; j < i; j++) {
-      auto QAi = samples[i].ref.rot.transpose();
-      auto QAj = samples[j].ref.rot.transpose();
+      auto QAi = (samples[i].ref.rot).transpose();
+      auto QAj = (samples[j].ref.rot).transpose();
       auto dQA = QAj - QAi;
-      auto CA = QAj * (samples[j].ref.trans - samples[j].target.trans) - QAi * (samples[i].ref.trans - samples[i].target
+      auto CA = QAj * (samples[j].ref.trans - rot * samples[j].target.trans) - QAi * (samples[i].ref.trans - rot * samples[i].target
         .trans);
       deltas.push_back(std::make_pair(CA, dQA));
 
-      auto QBi = samples[i].target.rot.transpose();
-      auto QBj = samples[j].target.rot.transpose();
+      auto QBi = (rot * samples[i].target.rot).transpose();
+      auto QBj = (rot * samples[j].target.rot).transpose();
       auto dQB = QBj - QBi;
-      auto CB = QBj * (samples[j].ref.trans - samples[j].target.trans) - QBi * (samples[i].ref.trans - samples[i].target
+      auto CB = QBj * (samples[j].ref.trans - rot * samples[j].target.trans) - QBi * (samples[i].ref.trans - rot * samples[i].target
         .trans);
       deltas.push_back(std::make_pair(CB, dQB));
     }

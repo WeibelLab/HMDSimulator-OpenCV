@@ -62,6 +62,6 @@ DSample DeltaRotationSamples(Sample s1, Sample s2);
 
 Eigen::Matrix3d CalibrateRotation(const std::vector<Sample>& samples);
 
-Eigen::Vector3d CalibrateTranslation(const std::vector<Sample>& samples);
+Eigen::Vector3d CalibrateTranslation(const Eigen::Matrix3d rot, const std::vector<Sample>& samples);
 
 #endif

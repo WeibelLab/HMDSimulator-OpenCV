@@ -136,10 +136,10 @@ namespace TestSpaceCalibrator
                 float[] targetArray = copyMatrixToArray(targetMatrix);
 
 
-                int count = AddSamples(handle, targetArray, refArray);
+                int count = AddSamples(handle, refArray, targetArray);
 
                 // 
-                if (count % 100 == 0)
+                if (i == 900 - 1)
                 {
                     int result = PerformCalibration(handle);
                     if (result > 0)
@@ -225,13 +225,14 @@ namespace TestSpaceCalibrator
                     var truthSample = truthList[i];
                     var rotatedVec = refSample.position; //
 
-                    var rotatedQuat = outRotQuat * refSample.rotation;
+                    var rotatedQuat = outRotQuatInv * refSample.rotation;
 
-                    rotatedVec.X += outTransVec.X;//outTransVec.X; 4.096452f;
-                    rotatedVec.Y += outTransVec.Y;//outTransVec.Y; -7.150463f; 
-                    rotatedVec.Z += outTransVec.Z;//outTransVec.Z; 0.432592f; 
 
-                    rotatedVec = Vector3.Transform(rotatedVec, resRot);
+                    rotatedVec.X -= outTransVec.X;//outTransVec.X; 4.096452f;
+                    rotatedVec.Y -= outTransVec.Y;//outTransVec.Y; -7.150463f; 
+                    rotatedVec.Z -= outTransVec.Z;//outTransVec.Z; 0.432592f; 
+
+                    rotatedVec = Vector3.Transform(rotatedVec, outRotQuatInv);
 
                     Console.WriteLine();
                     Console.Write("ref:");
