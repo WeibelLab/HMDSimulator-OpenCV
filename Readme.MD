@@ -1,5 +1,3 @@
 # HMDSimulator-OpenCV
 ---
-OpenCV plugin for HMDSimulator so that we can:
- - [ ] Generate and detect Aruco markers
- - [ ] Calibrate virtual cameras
+This is the OpenCV plugin for https://github.com/WeibelLab/HMDSimulator. If you have any issues building it, please, open an Issue :)
